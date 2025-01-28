@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEWs</title>
+    <style>
+        body {
+            font-family: 'Sarabun', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .quiz-section {
+            display: none;
+        }
+        button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 12px;
+            background-color: #44c594;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            font-family: 'Sarabun', Arial, sans-serif;
+            transition: background-color 0.3s;
+        }
+        .question {
+            margin-bottom: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #209bd4;
+            color: white;
+            margin-top: 30px;
+        }
+
+        footer div {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <h1>PEWs</h1>
+
+    <!-- หน้าแรกแสดงตัวเลือกแบบทดสอบ -->
+    <div id="select-quiz">
+        <h2>เลือกแบบทดสอบ:</h2>
+        <button onclick="startQuiz(1)">0-1 เดือน</button>
+        <button onclick="startQuiz(2)">1 เดือน - 1 ปี</button>
+        <button onclick="startQuiz(3)">1 ปี - 5 ปี</button>
+        <button onclick="startQuiz(4)">5 ปี - 10 ปี</button>
+        <button onclick="startQuiz(5)">มากกว่า 10 ปี</button>
+    </div>
+
+    <!-- ส่วนแบบทดสอบ -->
+    <div id="quiz-section" class="quiz-section">
+        <form id="quiz-form">
+            <h2 id="quiz-title"></h2>
+            <div id="questions-container"></div>
+            <button type="button" onclick="calculateScore()">ส่งคำตอบ</button>
+        </form>
+        <h2 id="result"></h2>
+        <button onclick="goBack()">กลับไปหน้าแรก</button>
+    </div>
+
+    <script>
+        // คำถามและตัวเลือกสำหรับแต่ละแบบทดสอบ
+        const quizzes = {
+            1: {
+                title: "0-1 เดือน",
+                questions: [
+                    { text: "Behavior พฤติกรรม/Neurological ระบบประสาท", choices: ["เล่นได้ตามปกติ/สนใจสิ่งแวดล้อม/พักหลับได้ตามปกติ(0)", "ง่วงซึม/ง่วงนอน(1)","พักไม่ได้ปลอบโยนให้หลับได้ยาก(2)","เฉื่อยชา เซื่องซึม สับสนตัวอ่อน ไม่มีแรง ตอบสนองต่อความปวดลดลง Pupil 2 ข้างไม่เท่ากัน มีอาการเกิดขึ้นแต่ละครั้งเป็นเวลานาน(3)"] },
+                    { text: "ระบบหัวใจและหลอดเลือด (Cardiovascular)", choices: ["ผิวสีชมพู/Cap refill 1-2 sec/HR ปกติ (0)", "ผิวซีดหรือดำคล้ำCRT 3 sec /HR >180/min (1)", "ผิวซีดหรือดำคล้ำ CRT 4 sec /HR >200/min(2)", "สีผิวคล้ำเขียวหรือตัวลาย CRT 5 sec/หัวใจเต้นช้า/HR >220/min(3)	"] },
+                    { text: "ระบบการหายใจ(Respiratory)", choices: ["หายใจปกติ ไม่มีRetraction(0)", "Mild retraction/On O2 cannula1L/O2 sat น้อยกว่าค่า baseline/Apneaเป็นบางครั้ง/wheezing outsp./ RR>60/min(1)", "Moderate retraction/On O2 cannula เพิ่มขึ้น1-2 L/M/ใช้O2 40-60%มี Apnea/Wheezing insp.&outsp./RR>70/min(2)", "Severe retraction/ใช้ O2> 60%/Grunting/Wheezing insp.&outsp./RR>70/min(3)"] }
+                ]
+            },
+            2: {
+                title: "1 เดือน - 1 ปี",
+                questions: [
+                    { text: "Behavior พฤติกรรม/Neurological ระบบประสาท", choices: ["เล่นได้ตามปกติ/สนใจสิ่งแวดล้อม/พักหลับได้ตามปกติ(0)", "ง่วงซึม/ง่วงนอน(1)", "พักไม่ได้ปลอบโยนให้หลับได้ยาก(2)", "เฉื่อยชา เซื่องซึม สับสนตัวอ่อน ไม่มีแรง ตอบสนองต่อความปวดลดลง Pupil 2 ข้างไม่เท่ากัน มีอาการเกิดขึ้นแต่ละครั้งเป็นเวลานาน(3)"] },
+                    { text: "ระบบหัวใจและหลอดเลือด (Cardiovascular)", choices: ["ผิวสีชมพู/Cap refill 1-2 sec/HR ปกติ (0)", "ผิวซีดหรือดำคล้ำCRT 3 sec /HR >160/min (1)", "ผิวซีดหรือดำคล้ำ CRT 4 sec /HR >180/min(2)", "สีผิวคล้ำเขียวหรือตัวลาย CRT 5 sec/หัวใจเต้นช้า/HR >200/min(3)"] },
+                    { text: "ระบบการหายใจ(Respiratory)", choices: ["หายใจปกติ ไม่มีRetraction(0)", "Mild retraction/On O2 cannula1L/O2 sat น้อยกว่าค่า baseline/Apneaเป็นบางครั้ง/wheezing outsp/ RR>50min(1)", "Moderate retraction/On O2 cannula เพิ่มขึ้น1-2 L/M/ใช้O2 40-60%มี Apnea/Wheezing insp.&outsp./RR>60/min(2)", "Severe retraction/ใช้ O2> 60%/Grunting/Wheezing insp.&outsp./RR>60/min(3)"] }
+                ]
+            },
+            3: {
+                title: "1 ปี - 5 ปี",
+                questions: [
+                    { text: "Behavior พฤติกรรม/Neurological ระบบประสาท", choices: ["เล่นได้ตามปกติ/สนใจสิ่งแวดล้อม/พักหลับได้ตามปกติ(0)", "ง่วงซึม/ง่วงนอน(1)", "พักไม่ได้ปลอบโยนให้หลับได้ยาก(2)", "ตัเฉื่อยชา เซื่องซึม สับสนตัวอ่อน ไม่มีแรง ตอบสนองต่อความปวดลดลง Pupil 2 ข้างไม่เท่ากัน มีอาการเกิดขึ้นแต่ละครั้งเป็นเวลานาน(3)"] },
+                    { text: "ระบบหัวใจและหลอดเลือด (Cardiovascular)", choices: ["ผิวสีชมพู/Cap refill 1-2 sec/HR ปกติ (0)", "ผิวซีดหรือดำคล้ำCRT 3 sec /HR >140/min (1)", "ผิวซีดหรือดำคล้ำ CRT 4 sec /HR >160/min(2)", "สีผิวคล้ำเขียวหรือตัวลาย CRT 5 sec/หัวใจเต้นช้า/HR >180/min(3)"] },
+                    { text: "ระบบการหายใจ(Respiratory)", choices: ["หายใจปกติ ไม่มีRetraction(0)", "Mild retraction/On O2 cannula1L/O2 sat น้อยกว่าค่า baseline/Apneaเป็นบางครั้ง/wheezing outsp/ RR>40min(1)", "Moderate retraction/On O2 cannula เพิ่มขึ้น1-2 L/M/ใช้O2 40-60%มี Apnea/Wheezing insp.&outsp./RR>50/min(2)", "Severe retraction/ใช้ O2> 60%/Grunting/Wheezing insp.&outsp./RR>50/min(3)"] }
+                ]
+            },
+            4: {
+                title: "5 ปี - 10 ปี",
+                questions: [
+                    { text: "Behavior พฤติกรรม/Neurological ระบบประสาท", choices: ["เล่นได้ตามปกติ/สนใจสิ่งแวดล้อม/พักหลับได้ตามปกติ(0)", "ง่วงซึม/ง่วงนอน(1)", "พักไม่ได้ปลอบโยนให้หลับได้ยาก(2)", "เฉื่อยชา เซื่องซึม สับสนตัวอ่อน ไม่มีแรง ตอบสนองต่อความปวดลดลง Pupil 2 ข้างไม่เท่ากัน มีอาการเกิดขึ้นแต่ละครั้งเป็นเวลานาน(3)"] },
+                    { text: "ระบบหัวใจและหลอดเลือด (Cardiovascular)", choices: ["ผิวสีชมพู/Cap refill 1-2 sec/HR ปกติ (0)", "ผิวซีดหรือดำคล้ำCRT 3 sec /HR >140/min (1)", "ผิวซีดหรือดำคล้ำ CRT 4 sec /HR >160/min(2)", "สีผิวคล้ำเขียวหรือตัวลาย CRT 5 sec/หัวใจเต้นช้า/HR >180/min(3)"] },
+                    { text: "ระบบการหายใจ(Respiratory)", choices: ["หายใจปกติ ไม่มีRetraction(0)", "Mild retraction/On O2 cannula1L/O2 sat น้อยกว่าค่า baseline/Apneaเป็นบางครั้ง/wheezing outsp/ RR>30min(1)", "Moderate retraction/On O2 cannula เพิ่มขึ้น1-2 L/M/ใช้O2 40-60%มี Apnea/Wheezing insp.&outsp./RR>40/min(2)", "Severe retraction/ใช้ O2> 60%/Grunting/Wheezing insp.&outsp./RR>45/min(3)"] }
+                ]
+            },
+            5: {
+                title: "มากกว่า 10 ปี",
+                questions: [
+                    { text: "Behavior พฤติกรรม/Neurological ระบบประสาท", choices: ["เล่นได้ตามปกติ/สนใจสิ่งแวดล้อม/พักหลับได้ตามปกติ(0)", "ง่วงซึม/ง่วงนอน(1)", "พักไม่ได้ปลอบโยนให้หลับได้ยาก(2)", "เฉื่อยชา เซื่องซึม สับสนตัวอ่อน ไม่มีแรง ตอบสนองต่อความปวดลดลง Pupil 2 ข้างไม่เท่ากัน มีอาการเกิดขึ้นแต่ละครั้งเป็นเวลานาน(3)"] },
+                    { text: "ระบบหัวใจและหลอดเลือด (Cardiovascular)", choices: ["ผิวสีชมพู/Cap refill 1-2 sec/HR ปกติ (0)", "ผิวซีดหรือดำคล้ำCRT 3 sec /HR >110/min (1)", "ผิวซีดหรือดำคล้ำ CRT 4 sec /HR >120/min(2)", "สีผิวคล้ำเขียวหรือตัวลาย CRT 5 sec/หัวใจเต้นช้า/HR >150/min(3)"] },
+                    { text: "ระบบการหายใจ(Respiratory)", choices: ["หายใจปกติ ไม่มีRetraction(0)", "Mild retraction/On O2 cannula1L/O2 sat น้อยกว่าค่า baseline/Apneaเป็นบางครั้ง/wheezing outsp/ RR>20min(1)", "Moderate retraction/On O2 cannula เพิ่มขึ้น1-2 L/M/ใช้O2 40-60%มี Apnea/Wheezing insp.&outsp./RR>30/min(2)", "Severe retraction/ใช้ O2> 60%/Grunting/Wheezing insp.&outsp./RR>45/min(3)"] }
+                ]
+            }
+        };
+
+        function startQuiz(quizId) {
+            const quiz = quizzes[quizId];
+            document.getElementById('select-quiz').style.display = 'none';
+            document.getElementById('quiz-section').style.display = 'block';
+            document.getElementById('quiz-title').textContent = quiz.title;
+
+            const questionsContainer = document.getElementById('questions-container');
+            questionsContainer.innerHTML = ""; // ล้างคำถามเก่าออก
+
+            quiz.questions.forEach((q, index) => {
+                const questionHtml = `
+                    <div class="question">
+                        <p>${index + 1}. ${q.text}</p>
+                        ${q.choices.map((choice, i) => `
+                            <label>
+                                <input type="radio" name="q${index + 1}" value="${i}">
+                                ${choice}
+                            </label><br>
+                        `).join('')}
+                    </div>
+                `;
+                questionsContainer.innerHTML += questionHtml;
+            });
+        }
+
+        function calculateScore() {
+            let score = 0;
+            const form = document.getElementById('quiz-form');
+            const result = document.getElementById('result');
+
+            const inputs = form.querySelectorAll('input[type="radio"]:checked');
+            inputs.forEach(input => {
+                score += parseInt(input.value);
+            });
+
+            if (score <= 2) {
+                result.textContent = `คะแนนของคุณคือ ${score}: ประเมิณผู้ป่วยต่อเนื่องทุก 4 ชั่วโมง`;
+                result.style.color = 'green';
+            } else if (score <= 4) {
+                result.textContent = `คะแนนของคุณคือ ${score}: รายงานพยาบาล/Incharge และแพทย์, ประเมิณอาการผู้ป่วยบ่อยขึ้นตามแผนการรักษา(หรือแพทย์ประเมิณผู้ป่วยข้างเตียง)`;
+                result.style.color = 'orange';
+            } else {
+                result.textContent = `คะแนนของคุณคือ ${score}: แพทย์ต้องประเมิณอาการผู้ป่วยข้างเตียง, เตรียม Resucitation`;
+                result.style.color = 'red';
+            }
+        }
+
+        function goBack() {
+            document.getElementById('quiz-section').style.display = 'none';
+            document.getElementById('select-quiz').style.display = 'block';
+            document.getElementById('result').textContent = '';
+            document.getElementById('quiz-form').reset();
+        }
+    </script>
+    <footer>
+        <div>โรงพยาบาลสมเด็จพระเจ้าตากสินมหาราช</div>
+    </footer>
+</body>
+</html>
